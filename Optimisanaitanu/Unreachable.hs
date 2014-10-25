@@ -1,4 +1,4 @@
-module DeadCode where
+module Unreachable where
 import IParser
 import Data.List
 
@@ -6,45 +6,20 @@ type Reg      = Int
 type BlockNum = Int
 type FuncName = String
 type Val      = String
-
-data IProgram 
-    = IProgram [IFunction]
-    deriving Show
+type Node     = Int
   
 -- intercalate joins a list of strings with a separator (courtesy of StackOverflow)  
 showIProg :: IProgram -> String
 showIProg (IProgram funcs) = "(" ++ (intercalate "\n" (map showIFunc funcs)) ++ "  )\n"
 
-data IFunction
-    = IFunction FuncName IArguments [IBlock]
-    deriving Show
-
 --Turns a IFunction into a readable string
 showIFunc :: IFunction -> String
 showIFunc (IFunction id (IArguments args) iblocks) = "( " ++ id ++ " (" ++ (intercalate " " args) ++ ")\n" ++ (intercalate "\n" (map showBlock iblocks)) ++ "  )"
-
-data IArguments
-    = IArguments [Var]
-    deriving Show
-
-data IBlock
-    = IBlock BlockNum [IInstruction]
-    deriving Show
     
 --Turns a IBlock into a readable string
 showBlock :: IBlock -> String
 showBlock (IBlock bnum [])    = "  (" ++ (show bnum) ++ "  )"
 showBlock (IBlock bnum insts) = "  (" ++ (show bnum) ++ "  " ++ (intercalate "\n      " (map showInst insts)) ++ "  )"
-
-data IInstruction
-    = Ilc Reg Int
-    | Ild Reg Var
-    | Ist Var Reg
-    | Iop Op Reg Reg Reg
-    | Ibr Reg BlockNum BlockNum
-    | Iret Reg
-    | Icall Reg FuncName [Reg]
-    deriving Show
     
 --Turns an operation into a readable string
 toIop :: Op -> String
@@ -68,28 +43,46 @@ showInst inst = case inst of
     Iret reg         -> "(ret r" ++ (show reg) ++ ")"
     Icall reg f args -> "(call r" ++ (show reg) ++ " " ++ f ++ " r" ++ (intercalate " r" (map show args)) ++ ")"
 
-getBlocksInstruction :: IInstruction -> [Int]
+getBlocksInstruction :: IInstruction -> [Node]
 getBlocksInstruction (Ibr r b1 b2) = [b1,b2]
 getBlocksInstruction _ = []
 
-getBlocksInstructions :: [IInstruction] -> [Int]
+getBlocksInstructions :: [IInstruction] -> [Node]
 getBlocksInstructions (i:rest) = (getBlocksInstruction i) ++ (getBlocksInstructions rest)
 getBlocksInstructions _ = []
 
-getBlocksBlock :: IBlock -> [(Int,[Int])]
-getBlocksBlock IBlock num i = [num,(getBlocksInstructions i)]
+getBlocksBlock :: IBlock -> [(Node,[Node])]
+getBlocksBlock (IBlock num i) = [(num,(getBlocksInstructions i))]
 
-getBlocksBlocks :: [IBlock] -> [(Int,[Int])]
+getBlocksBlocks :: [IBlock] -> [(Node,[Node])]
 getBlocksBlocks (b:rest) = (getBlocksBlock b) ++ (getBlocksBlocks rest)
 getBlocksBlocks _ = []
 
 --Returns a list of all possible blocks
-getBlocksFunction :: IFunction -> [(String,[Int])]
+getBlocksFunction :: IFunction -> [(Node,[Node])]
 getBlocksFunction (IFunction name _ b) = getBlocksBlocks b
 
-getBlocks :: [IFunction] -> [(String,[Int])]
-getBlocks (f:rest) = (getBlocksFunction f) ++ (getBlocks rest)
+removeBlocks :: [Node] -> IFunction -> [Node]
+removeBlocks n _ = n
+
+bfs :: [(Node,[Node])] -> [Node] -> [Node]
+bfs (a:rest) = [(fst a)] ++ (bfs rest)
+bfs _ = []
+
+
+getBlocks :: [IFunction] -> [[Node]]
+getBlocks (f:rest) = [removeBlocks (bfs (getBlocksFunction f) [0])  f]-- ++ (getBlocks rest)
 getBlocks _ = []
 
-removeDeadCode :: IProgram -> [(String,[Int])]
-removeDeadCode (IProgram funcs) = getBlocks funcs
+removeUnreachable :: IProgram -> [[Node]]
+removeUnreachable (IProgram funcs) = getBlocks funcs
+
+-- Removes unreachable code  
+unreachableFile :: FilePath -> IO [[Node]]
+unreachableFile file = do
+   parsed_prog <- parseFile file
+   return (removeUnreachable parsed_prog)
+   
+printUnreachableFile file = do
+   removed <- unreachableFile file
+   putStr ((show removed)++"\n")
