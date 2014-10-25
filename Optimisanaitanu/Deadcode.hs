@@ -23,17 +23,35 @@ get_block_zero (b:rest) = if is_block_zero b then b
 -- deadcode_x converts x into a filtered version of x with dead code removed
 deadcode_prog :: IProgram -> IProgram
 deadcode_prog (IProgram funcs) = IProgram (deadcode_funcs funcs)
-                                   
-deadcode_funcs :: [IFunction] -> [IFunction]
-deadcode_funcs funcs = filtered_funcs
-                     where (_, filtered_funcs) = deadcode_func (get_main funcs) funcs
 
-deadcode_func :: IFunction -> [IFunction] -> (IFunction, [IFunction])
-deadcode_func func all_funcs = (IFunction func_name args filtered_blocks, all_funcs)
-                             where (IFunction func_name args blocks) = func
-                                   (filtered_blocks, _, _) = deadcode_blocks blocks func all_funcs
-                             
-deadcode_blocks :: [IBlock] -> IFunction -> [IFunction] -> ([IBlock], IFunction, [IFunction])
-deadcode_blocks blocks func all_funcs = de all_funcs
+-----------------------------------
 
+deadcode_inst :: [IInstruction] -> [IBlock] -> IFunction -> [IFunction] -> ([Reg], [IInstruction], [IBlock], IFunction, [IFunction])
+deadcode_inst [] blocks func all_funcs = ([], [], blocks, func, all_funcs) 
+deadcode_inst (inst:rest) blocks func all_funcs = case inst of
+  -- lc/ld: Check if variable will be used, if so removed from used_regs, else delete instruction
+  Ilc regnum _ = if elem regnum used_regs
+                 then (delete regnum used_regs, [inst] ++ insts2, blocks2, func2, all_funcs2)
+                 else (used_regs, insts2, blocks2, func2, all_funcs2)
+                     
+  Ild regnum _ = if elem regnum used_regs
+                 then (delete regnum used_regs, [inst] ++ insts2, blocks2, func2, all_funcs2)
+                 else (used_regs, insts2, blocks2, func2, all_funcs2)
+                 
+  Iop _ reg1 reg2 reg3 = if elem reg1 used_regs
+                         then ([reg2, reg3] ++ (delete reg1 used_regs), [inst] ++ insts2, blocks2, func2, all_funcs2)
+                         else (used_regs, insts2, blocks2, func2, all_funcs2)
+  
+  Ibr regnum _ _ = (union [regnum] used_regs, [inst] ++ insts2, blocks2, func2, all_funcs2)
+  
+  Ist _ regnum = (union [regnum] used_regs, [inst] ++ insts2, blocks2, func2, all_funcs2)
+  
+  Iret regnum = (union [regnum] used_regs, [inst] ++ insts2, blocks2, func2, all_funcs2)
 
+  -- call: Check if output register will be used, if so remove it then union with function arg register list
+  Icall regnum _ reglist = if elem regnum used_regs
+                           then (union reglist (delete regnum used_regs), [inst] ++ insts2, blocks2, func2, all_funcs2)
+                           else (used_regs, insts2, blocks2, func2, all_funcs2)
+  
+  where (used_regs, insts2, blocks2, func2, all_funcs2) = deadcode rest block all_funcs
+    

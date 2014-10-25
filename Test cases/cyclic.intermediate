@@ -3,7 +3,7 @@
         (lc r2 1)
         (sub r3 r1 r2)
         (st n r3)
-        (br n 0 1) )
+        (br r3 0 1) )
     (1  (ld r2 1)
         (br r2 2 3) )
     (2  (ld r2 2)
