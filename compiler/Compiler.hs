@@ -88,28 +88,29 @@ istmt statement bnum = case statement of
         (StmtAssign var exp)       -> (instlist ++ [(Ist var 1)], [], bnum)
                                          where instlist = iexp exp 1
         (StmtReturn var)           -> ([Ild 1 var, Iret 1], [], bnum)
-        (StmtIfThen var b1)        -> ([Ild 1 var, Ibr 1 (bnum + 1) (bnum + 2)], ib1 ++ [IBlock (bnum + 2) [Ilc 1 0]], bnum + 2) -- Dummy instruction for the other branch
-                                         where ib1 = iblock b1 (bnum + 1) []
-        (StmtIfThenElse var b1 b2) -> ([Ild 1 var, Ibr 1 (bnum + 1) (bnum + 2)], ib1 ++ ib2, bnum + 2)
-                                         where ib1 = iblock b1 (bnum + 1) []
-                                               ib2 = iblock b2 (bnum + 2) []
+        (StmtIfThen var b1)        -> ([Ild 1 var, Ibr 1 (bnum + 1) (bnum1 + 1)], ib1 ++ [IBlock (bnum1 + 1) [Ilc 1 0]], bnum1 + 1) -- Dummy instruction for the other branch
+                                         where (ib1, bnum1) = iblock b1 (bnum + 1) []
+        (StmtIfThenElse var b1 b2) -> ([Ild 1 var, Ibr 1 (bnum + 1) (bnum1 + 1)], ib1 ++ ib2, bnum2)
+                                         where (ib1, bnum1) = iblock b1 (bnum + 1) []
+                                               (ib2, bnum2) = iblock b2 (bnum1 + 1) []
 
 --Turns a list of statements into a list of instructions
-istmts :: [Statement] -> BlockNum -> ([IInstruction], [IBlock])
-istmts [] bnum          = ([], [])
-istmts (stmt:rest) bnum = (insts1 ++ insts2, blocks1 ++ blocks2)
+istmts :: [Statement] -> BlockNum -> ([IInstruction], [IBlock], BlockNum)
+istmts [] bnum          = ([], [], bnum)
+istmts (stmt:rest) bnum = (insts1 ++ insts2, blocks1 ++ blocks2, bnum3)
                             where (insts1, blocks1, bnum2) = istmt stmt bnum
-                                  (insts2, blocks2) = istmts rest bnum2
+                                  (insts2, blocks2, bnum3) = istmts rest bnum2
                              
---Turns a block into a list of Iblocks
-iblock :: Block -> BlockNum -> [Var] -> [IBlock]
-iblock (Block b) bnum vars = if bnum == 0 then [IBlock bnum ([Ilc 1 0] ++ (map (\x -> Ist x 1) vars) ++ insts)] ++ blocks -- Initialise VARS variables to 0
-                             else [IBlock bnum insts] ++ blocks
-                             where (insts, blocks) = istmts b bnum
+--Turns a block into a list of Iblocks, returning the last used block number
+iblock :: Block -> BlockNum -> [Var] -> ([IBlock], BlockNum)
+iblock (Block b) bnum vars = if bnum == 0 then ([IBlock bnum ([Ilc 1 0] ++ (map (\x -> Ist x 1) vars) ++ insts)] ++ blocks, bnum2) -- Initialise VARS variables to 0
+                             else ([IBlock bnum insts] ++ blocks, bnum2)
+                             where (insts, blocks, bnum2) = istmts b bnum
 
 --Turns a function into an IFunction
 ifunc :: Function -> IFunction
-ifunc (Function f (Arguments args) (Variables vars) b) = (IFunction f (IArguments args) (iblock b 0 vars))
+ifunc (Function f (Arguments args) (Variables vars) b) = (IFunction f (IArguments args) block)
+                                                       where (block, bnum) = (iblock b 0 vars)
 
 --Turns a program into an IProgram
 iprog :: Program -> IProgram
