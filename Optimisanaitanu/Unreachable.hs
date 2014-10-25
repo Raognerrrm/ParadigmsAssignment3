@@ -1,30 +1,11 @@
 module Unreachable where
 import IParser
+import FlowGraph
 
 type Reg      = Int
 type BlockNum = Int
 type FuncName = String
 type Val      = String
-type Node     = Int
-
-getBlocksInstruction :: IInstruction -> [Node]
-getBlocksInstruction (Ibr r b1 b2) = [b1,b2]
-getBlocksInstruction _ = []
-
-getBlocksInstructions :: [IInstruction] -> [Node]
-getBlocksInstructions (i:rest) = (getBlocksInstruction i) ++ (getBlocksInstructions rest)
-getBlocksInstructions _ = []
-
-getBlocksBlock :: IBlock -> [(Node,[Node])]
-getBlocksBlock (IBlock num i) = [(num,(getBlocksInstructions i))]
-
-getBlocksBlocks :: [IBlock] -> [(Node,[Node])]
-getBlocksBlocks (b:rest) = (getBlocksBlock b) ++ (getBlocksBlocks rest)
-getBlocksBlocks _ = []
-
---Returns a list of all possible blocks
-getBlocksFunction :: IFunction -> [(Node,[Node])]
-getBlocksFunction (IFunction name _ b) = getBlocksBlocks b
 
 getNew :: [Node] -> [Node] -> Node
 getNew stuff (a:rest) = if (isin a stuff) then getNew stuff rest
@@ -52,7 +33,8 @@ bfs graph n searched current = if (n == -1) then current
   (searched ++ [n]) (removeDups (current ++ (getChildren graph n)))
 
 removeBlocksBlocks :: [IBlock] -> [Node] -> [IBlock]
-removeBlocksBlocks ((IBlock num i):rest) n = if (isin num n) then [(IBlock num i)] ++ (removeBlocksBlocks rest n)
+removeBlocksBlocks ((IBlock num i):rest) n = if (isin num n)
+  then [(IBlock num i)] ++ (removeBlocksBlocks rest n)
   else removeBlocksBlocks rest n
 removeBlocksBlocks _ _ = []
 
