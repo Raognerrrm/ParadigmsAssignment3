@@ -65,13 +65,23 @@ getBlocksFunction (IFunction name _ b) = getBlocksBlocks b
 removeBlocks :: [Node] -> IFunction -> [Node]
 removeBlocks n _ = n
 
-bfs :: [(Node,[Node])] -> [Node] -> [Node]
-bfs (a:rest) = [(fst a)] ++ (bfs rest)
+getNew :: [Node] -> [Node] -> Node
+getNew (a:rest) stuff = if (fst a) in stuff then getNew rest stuff
+    else fst a
+getNew _ _ = -1
+
+getChildren :: [(Node,[Node])] -> Node -> [Node]
+getChildren (a:rest) n = if (fst a) == n then last a
+    else getChildren rest
+getChildren _ _ = []
+
+bfs :: [(Node,[Node])] -> Node -> [Node] -> [Node] -> [Node]
+bfs _ -1 _ stuff = stuff
+bfs graph n searched current = bfs graph (getNew (searched ++ [n]) (current ++ (getChildren graph n))) (searched ++ [n]) (current ++ (getChildren graph n))
 bfs _ = []
 
-
 getBlocks :: [IFunction] -> [[Node]]
-getBlocks (f:rest) = [removeBlocks (bfs (getBlocksFunction f) [0])  f]-- ++ (getBlocks rest)
+getBlocks (f:rest) = [removeBlocks (bfs (getBlocksFunction f) 0 [0])  f]-- ++ (getBlocks rest)
 getBlocks _ = []
 
 removeUnreachable :: IProgram -> [[Node]]
