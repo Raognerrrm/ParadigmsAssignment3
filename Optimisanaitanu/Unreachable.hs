@@ -27,7 +27,7 @@ getBlocksFunction :: IFunction -> [(Node,[Node])]
 getBlocksFunction (IFunction name _ b) = getBlocksBlocks b
 
 getNew :: [Node] -> [Node] -> Node
-getNew (a:rest) stuff = if (isin a stuff) then getNew rest stuff
+getNew stuff (a:rest) = if (isin a stuff) then getNew stuff rest
     else a
 getNew _ _ = -1
 
@@ -49,7 +49,7 @@ removeDups _ = []
 bfs :: [(Node,[Node])] -> Node -> [Node] -> [Node] -> [Node]
 bfs graph n searched current = if (n == -1) then current
   else bfs graph (getNew (searched ++ [n]) (removeDups (current ++ (getChildren graph n))))
-  (searched ++ [n]) (removeDups(current ++ (getChildren graph n)))
+  (searched ++ [n]) (removeDups (current ++ (getChildren graph n)))
 
 removeBlocksBlocks :: [IBlock] -> [Node] -> [IBlock]
 removeBlocksBlocks ((IBlock num i):rest) n = if (isin num n) then [(IBlock num i)] ++ (removeBlocksBlocks rest n)
@@ -74,4 +74,4 @@ unreachableFile file = do
    
 printUnreachableFile file = do
    removed <- unreachableFile file
-   putStrLn ((showIProg removed)++"\n")
+   putStrLn ( showIProg removed++"\n")
