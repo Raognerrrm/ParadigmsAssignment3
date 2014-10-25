@@ -1,0 +1,24 @@
+FUNCTION main(a, b)
+VARS tmp, cond;
+BEGIN
+  cond = (a < b);
+  IF cond THEN
+  BEGIN
+    tmp = (b - a);
+    tmp = main(a, tmp);
+  END
+  ELSE
+  BEGIN
+    cond = (a > b);
+    IF cond THEN
+    BEGIN
+      tmp = (a - b);
+      tmp = main(b, tmp);
+    END
+    ELSE
+    BEGIN
+      tmp = a;
+    END;
+  END;
+  RETURN tmp;
+END
