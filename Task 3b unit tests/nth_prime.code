@@ -1,0 +1,87 @@
+FUNCTION testSqrt(n, a)
+VARS cond, tmp, tmp2;
+BEGIN
+    tmp = (a * a);
+    cond = (tmp > n);
+    IF cond THEN
+    BEGIN
+        RETURN a;
+    END;
+    tmp2 = (a + 1);
+    tmp = testSqrt(n, tmp2);
+    RETURN tmp;
+END
+FUNCTION sqrt(n)
+VARS tmp;
+BEGIN
+    tmp = 0;
+    tmp = testSqrt(n, tmp);
+    RETURN tmp;
+END
+FUNCTION divisible(n, a)
+VARS cond, tmp;
+BEGIN
+    tmp = ((n / a) * a);
+    cond = (tmp == n);
+    RETURN cond;
+END
+FUNCTION testDiv(n, a, sqrt)
+VARS cond, tmp, tmp2;
+BEGIN
+    cond = (a == sqrt);
+    IF cond THEN
+    BEGIN
+        tmp = 1;
+        RETURN tmp;
+    END;
+    cond = divisible(n, a);
+    IF cond THEN
+    BEGIN
+        tmp = 0;
+        RETURN tmp;
+    END;
+    tmp2 = (a + 1);
+    tmp = testDiv(n, tmp2, sqrt);
+    RETURN tmp;
+END
+FUNCTION isPrime(n)
+VARS tmp, tmp2, s;
+BEGIN
+    tmp = 2;
+    s = (n + 1);
+    s = sqrt(s);
+    tmp2 = testDiv(n, tmp, s);
+    RETURN tmp2;
+END
+FUNCTION nextPrime(n)
+VARS cond, tmp, tmp2;
+BEGIN
+    tmp = (n + 1);
+    cond = isPrime(tmp);
+    IF cond THEN
+    BEGIN
+        RETURN tmp;
+    END;
+    tmp2 = nextPrime(tmp);
+    RETURN tmp2;
+END
+FUNCTION nthPrime(n, p)
+VARS cond, tmp;
+BEGIN
+    cond = (n == 0);
+    IF cond THEN
+    BEGIN
+        RETURN p;
+    END;
+    n = (n - 1);
+    p = nextPrime(p);
+    tmp = nthPrime(n, p);
+    RETURN tmp;
+END
+FUNCTION main(n)
+VARS tmp, tmp2;
+BEGIN
+    tmp2 = 1;
+    tmp = nthPrime(n, tmp2);
+    RETURN tmp;
+END

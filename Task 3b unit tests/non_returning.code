@@ -1,0 +1,10 @@
+FUNCTION foo(n)
+VARS tmp;
+BEGIN
+    tmp = (n + 1);
+END
+FUNCTION main(n)
+VARS tmp;
+BEGIN
+    tmp = foo(n);
+END

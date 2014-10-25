@@ -1,0 +1,50 @@
+FUNCTION isEven(n)
+VARS tmp, cond, retu;
+BEGIN
+    tmp = (n / 2);
+    tmp = (tmp * 2);
+    cond = (n == tmp);
+    IF cond THEN
+    BEGIN
+        retu = 1;
+    END
+    ELSE
+    BEGIN
+        retu = 0;
+    END;
+    RETURN retu;
+END
+FUNCTION iterate(n)
+VARS tmp, cond;
+BEGIN
+    cond = isEven(n);
+    IF cond THEN
+    BEGIN
+        tmp = (n / 2);
+    END
+    ELSE
+    BEGIN
+        tmp = ((n * 3) + 1);
+    END;
+    RETURN tmp;
+END
+FUNCTION collatz(n, cycle)
+VARS cond, tmp;
+BEGIN
+    cond = (n == 1);
+    IF cond THEN
+    BEGIN
+        RETURN cycle;
+    END;
+    n = iterate(n);
+    cycle = (cycle + 1);
+    tmp = collatz(n, cycle);
+    RETURN tmp;
+END
+FUNCTION main(n)
+VARS tmp, cycle;
+BEGIN
+    cycle = 0;
+    tmp = collatz(n, cycle);
+    RETURN tmp;
+END

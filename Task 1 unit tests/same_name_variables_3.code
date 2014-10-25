@@ -1,0 +1,5 @@
+FUNCTION main()
+VARS x, x;
+BEGIN
+    x = 10;
+END

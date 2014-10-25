@@ -1,0 +1,10 @@
+FUNCTION xyz(a, b)
+BEGIN
+    a = (a + b);
+    RETURN a;
+END
+FUNCTION main(a, b)
+BEGIN
+    a = xyz(a, b);
+    RETURN a;
+END

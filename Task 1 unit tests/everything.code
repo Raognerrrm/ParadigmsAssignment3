@@ -1,0 +1,38 @@
+FUNCTION a()
+BEGIN
+END
+
+FUNCTION b(a)
+VARS num;
+BEGIN
+    num = a;
+    num = 5;
+    IF num THEN
+    BEGIN
+      num = (num + -1 );
+    END;
+    RETURN num;
+END
+
+FUNCTION c(a, b)
+VARS num1, num2, vAR1able1, vAR1ab1eTWO;
+BEGIN
+    num1 = 1;
+    num2 = 2;
+    vAR1able1 = ( a * num1);
+    vAR1ab1eTWO = (b - (vAR1able1 / num2));
+    RETURN vAR1ab1eTWO;
+END
+
+FUNCTION main(a)
+BEGIN
+    IF a THEN
+    BEGIN
+        a = b(a);
+    END
+    ELSE
+    BEGIN
+        a = (a == (a +  a));
+    END;
+    RETURN a;
+END

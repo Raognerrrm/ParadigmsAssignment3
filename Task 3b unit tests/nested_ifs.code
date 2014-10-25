@@ -1,0 +1,22 @@
+FUNCTION main(tmp1, tmp2, tmp3)
+VARS r;
+BEGIN
+    IF tmp1 THEN
+    BEGIN
+        IF tmp2 THEN
+        BEGIN
+            r = 1;
+        END
+        ELSE
+        BEGIN
+            IF tmp3 THEN
+            BEGIN
+                r = 2;
+            END;
+        END;
+    END
+    ELSE
+    BEGIN
+        r = 3;
+    END;
+END

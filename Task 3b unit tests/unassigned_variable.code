@@ -1,0 +1,6 @@
+FUNCTION main(n)
+VARS tmp, tmp2;
+BEGIN
+    tmp2 = (n + tmp);
+    RETURN tmp2;
+END

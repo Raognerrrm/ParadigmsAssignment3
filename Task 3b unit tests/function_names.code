@@ -1,0 +1,22 @@
+FUNCTION add2(a, b)
+BEGIN
+    a = (a + b);
+    RETURN a;
+END
+FUNCTION r2d2(a, b)
+BEGIN
+    a = (a * b);
+    RETURN a;
+END
+FUNCTION FUNCTION32(a, b)
+BEGIN
+    a = (a - b);
+    RETURN a;
+END
+FUNCTION main(a, b)
+BEGIN
+    a = add2(a, b);
+    a = r2d2(a, b);
+    a = FUNCTION32(a, b);
+    RETURN a;
+END

@@ -1,0 +1,2 @@
+Program [Function "factorial" (Arguments ["n"]) (Variables ["cond", "tmp"]) (Block [StmtAssign "cond" (ExpOp (ExpId "n") DEq (ExpNum 0)), StmtIfThenElse "cond" (Block [StmtAssign "tmp" (ExpNum 1), StmtReturn "tmp"]) (Block [StmtAssign "tmp" (ExpOp (ExpId "n") Sub (ExpNum 1)), StmtAssign "tmp" (ExpOp (ExpIdArg "factorial" (Arguments ["tmp"])) Mul (ExpId "n")), StmtReturn "tmp"])]),
+Function "main" (Arguments ["n"]) (Variables ["tmp"]) (Block [StmtAssign "tmp" (ExpIdArg "factorial" (Arguments ["n"])), StmtReturn "tmp"])]

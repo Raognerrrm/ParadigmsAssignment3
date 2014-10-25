@@ -1,0 +1,4 @@
+FUNCTION main(main)
+BEGIN
+    RETURN main;
+END

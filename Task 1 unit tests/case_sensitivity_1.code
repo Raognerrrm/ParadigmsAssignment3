@@ -1,0 +1,4 @@
+FUNCTION main(X)
+BEGIN
+    x = 10;
+END

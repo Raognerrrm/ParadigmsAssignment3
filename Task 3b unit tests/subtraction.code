@@ -1,0 +1,5 @@
+FUNCTION main(a, b)
+BEGIN
+    a = (a - b);
+    RETURN a;
+END

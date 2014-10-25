@@ -1,0 +1,4 @@
+( main ()
+    (0 (lc r1 0)
+        (call r2 main)
+        (ret r1) ) ) )
