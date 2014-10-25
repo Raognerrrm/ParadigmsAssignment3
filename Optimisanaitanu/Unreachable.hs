@@ -52,7 +52,8 @@ bfs graph n searched current = if (n == -1) then current
   (searched ++ [n]) (removeDups (current ++ (getChildren graph n)))
 
 removeBlocksBlocks :: [IBlock] -> [Node] -> [IBlock]
-removeBlocksBlocks ((IBlock num i):rest) n = if (isin num n) then [(IBlock num i)] ++ (removeBlocksBlocks rest n)
+removeBlocksBlocks ((IBlock num i):rest) n = if (isin num n)
+  then [(IBlock num i)] ++ (removeBlocksBlocks rest n)
   else removeBlocksBlocks rest n
 removeBlocksBlocks _ _ = []
 
