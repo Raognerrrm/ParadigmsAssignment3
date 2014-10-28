@@ -3,6 +3,33 @@ import IParser
 
 type Node = Int
 
+--Get function functions
+getFuncInstruction :: IInstruction -> [Node]
+getFuncInstruction (Ibr r b1 b2) = [b1,b2]
+getFuncInstruction _ = []
+
+getFuncInstructions :: [IInstruction] -> [Node]
+getFuncInstructions (i:rest) = (getFuncInstruction i) ++ (getFuncInstructions rest)
+getFuncInstructions _ = []
+
+getFuncBlock :: IBlock -> [(Node,[Node])]
+getFuncBlock (IBlock num i) = [(num,(getFuncInstructions i))]
+
+getFuncBlocks :: [IBlock] -> [(Node,[Node])]
+getFuncBlocks (b:rest) = (getFuncBlock b) ++ (getFuncBlocks rest)
+getFuncBlocks _ = []
+
+getFuncFunction :: IFunction -> [(Node,[Node])]
+getFuncFunction (IFunction name _ b) = getFuncBlocks b
+
+getFuncFuncs :: [IFunction] -> [[(Node,[Node])]]
+getFuncFuncs (a:rest) = [getFuncFunction a] ++(getFuncFuncs rest)
+getFuncFuncs _ = []
+
+getFuncProg :: IProgram -> [[(Node,[Node])]]
+getFuncProg (IProgram funcs) = getFuncFuncs funcs
+
+
 --Random helper functions
 isin :: Node -> [Node] -> Bool
 isin n (a:rest) = if (n==a) then True
@@ -10,7 +37,7 @@ isin n (a:rest) = if (n==a) then True
 isin _ _ = False
 
 
---Get Block instructions
+--Get Block function
 getBlocksInstruction :: IInstruction -> [Node]
 getBlocksInstruction (Ibr r b1 b2) = [b1,b2]
 getBlocksInstruction _ = []
@@ -58,7 +85,7 @@ reverseGraph _ = []
 flowFile :: FilePath -> IO [[(Node,[Node])]]
 flowFile file = do
    parsed_prog <- parseFile file
-   return (reverseGraph (getBlocksProg parsed_prog))
+   return (getFuncProg parsed_prog)
    
 printFlowFile file = do
    removed <- flowFile file
