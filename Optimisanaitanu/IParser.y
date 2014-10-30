@@ -66,19 +66,19 @@ type BlockNum = Int
 
 data IProgram 
 	= IProgram [IFunction]
-    deriving Show
+    deriving (Show, Eq)
     
 data IFunction
 	= IFunction FuncName IArguments [IBlock]
-	deriving Show
+	deriving (Show, Eq)
     
 data IArguments
 	= IArguments [Var]
-	deriving Show
+	deriving (Show, Eq)
 
 data IBlock
 	= IBlock BlockNum [IInstruction]
-	deriving Show
+	deriving (Show, Eq)
     
 data IInstruction
 	= Ilc Reg Int
@@ -88,7 +88,7 @@ data IInstruction
 	| Ibr Reg BlockNum BlockNum
 	| Iret Reg
 	| Icall Reg FuncName [Reg]
-	deriving Show
+	deriving (Show, Eq)
   
 data Op
   = Add
@@ -98,7 +98,7 @@ data Op
   | LessThan
   | GreaterThan
   | DEq
-  deriving Show
+  deriving (Show, Eq)
 
 data Token
   = TokenLc
