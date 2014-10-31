@@ -16,6 +16,20 @@ happy 1.19.4
 
 Bash script notes
 =================
+
+The script can be run as follows:
+    
+    /optimize.sh input output optnumber
+
+Where if optnumber is 1: Run no optimasations
+                      2: Run the unreachable code optimisation
+                      3: Run the deadcode optimisation
+                      4: Run the redundant loads optimisation
+                      5: Run the unreachable code optimisation, then the deadcode optimisation
+                      6: Run the unreachable code optimisation, then the redundant loads optimisation
+                      7: Run the redundant loads optimisation, then the deadcode optimisation
+                      8: Run the unreachable code optimisation, then the redundant loads optimisation, then the deadcode optimisation
+
 If the bash scripts do not work, try running dos2unix on them, e.g.
 
     dos2unix optimize.sh
