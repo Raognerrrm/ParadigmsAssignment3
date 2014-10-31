@@ -69,7 +69,7 @@ get_used_regs bnum used_regs fwd_graph = foldl union [] (map (\x -> s_lookup x u
                                        where adj = s_lookup bnum fwd_graph
                                 
 deadcode_block :: [BlockNum] -> UsedRegMap -> BlockFlowGraph -> BlockFlowGraph -> IBlock -> IBlock
-deadcode_block (b:rest) used_regs fwd bwd (IBlock n insts) = (IBlock n (deadcode_insts rev ur))
+deadcode_block (b:rest) used_regs fwd bwd (IBlock n insts) = (IBlock n (reverse (deadcode_insts rev ur)))
                                                  where ur = get_used_regs b used_regs fwd
                                                        rev = reverse insts
 
@@ -96,7 +96,7 @@ deadcode_file file = do
    
 main = do
    dc <- deadcode_file "deadcode.intermediate"
-   putStr (showIProg dc ++ "\n")
+   putStr (IParser.showIProg dc ++ "\n")
 
 -- Backward flow analysis: Update list of used register numbers as you go through the reverse flow graph
 -- If a block contains a branch (i.e. more than one block points to it in the reverse flow graph), then
