@@ -53,3 +53,16 @@ The following files can be found in /Optimisanaitanu
 Unit testing
 ============
 Some tests were  written, but not exhaustive ones.
+
+
+Dead code notes
+============
+
+Assume the block flow graph is acyclic - this allows us to do a topological sort to decide
+the order to visit blocks in when performing a backwards flow analysis.
+
+Once we have the order, start with an empty used reg list. Stores, branches, etc. add to the list.
+Loads check if the reg is in the list - if it is then remove it and keep the load. Otherwise,
+the load is useless and is hence removed.
+
+When going to a new block, the remaining used registers from other blocks are unioned.
