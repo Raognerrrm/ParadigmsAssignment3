@@ -54,10 +54,10 @@ deadcode_blocks blocks = deadcode_b block_order [] forward_graph backward_graph 
                              backward_graph = reverseGraphSingle forward_graph forward_graph
                              
 deadcode_b :: [BlockNum] -> UsedRegMap -> BlockFlowGraph -> BlockFlowGraph -> [IBlock] -> [IBlock]
-deadcode_b _ _ _ _ [] = []
-deadcode_b nums used_regs fwd bwd (block:rest) = (a:b)
-                                               where (a,r) = deadcode_block nums used_regs fwd bwd block
-                                                     b = deadcode_b nums r fwd bwd rest
+deadcode_b [] _ _ _ _ = []
+deadcode_b (bnum:rest) used_regs fwd bwd blocks = (a:b)
+                                               where (a,r) = deadcode_block used_regs fwd bwd (get_block bnum blocks)
+                                                     b = deadcode_b rest r fwd bwd blocks
                                                      
 s_lookup :: Eq a => a -> [(a,b)] -> b
 s_lookup x [] = error "Error: lookup failed"
@@ -68,9 +68,9 @@ get_used_regs :: BlockNum -> UsedRegMap -> BlockFlowGraph -> [RegNum]
 get_used_regs bnum used_regs fwd_graph = foldl union [] (map (\x -> s_lookup x used_regs) adj)
                                        where adj = s_lookup bnum fwd_graph
                                 
-deadcode_block :: [BlockNum] -> UsedRegMap -> BlockFlowGraph -> BlockFlowGraph -> IBlock -> (IBlock, UsedRegMap)
-deadcode_block (b:rest) used_regs fwd bwd (IBlock n insts) = ((IBlock n (reverse dc)), [(b,regs)]++used_regs)
-                                                 where ur = get_used_regs b used_regs fwd
+deadcode_block :: UsedRegMap -> BlockFlowGraph -> BlockFlowGraph -> IBlock -> (IBlock, UsedRegMap)
+deadcode_block used_regs fwd bwd (IBlock n insts) = ((IBlock n (reverse dc)), [(n,regs)]++used_regs)
+                                                 where ur = get_used_regs n used_regs fwd
                                                        rev = reverse insts
                                                        (dc,regs) = deadcode_insts rev ur
 
@@ -104,7 +104,7 @@ deadcode_file file = do
    return (deadcode_prog parsed_prog)
    
 main = do
-   dc <- deadcode_file "branching.intermediate"
+   dc <- deadcode_file "branching1.intermediate"
    putStr (IParser.showIProg dc ++ "\n")
 
 -- Backward flow analysis: Update list of used register numbers as you go through the reverse flow graph
