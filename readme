@@ -1,0 +1,41 @@
+Programming Languages and Paradigms Assignment 3 - README
+========================================================
+
+Group members
+=============
+Benjamin Bowring (410025006)
+Antony Hills (312086016)
+Kevin Liang (312148550)
+
+
+Tools used
+==========
+ghci 7.8.3
+happy 1.19.4
+
+
+Bash script notes
+=================
+If the bash scripts do not work, try running dos2unix on them, e.g.
+
+    dos2unix optimize.sh
+    
+then try running the scripts again.
+
+
+File summaries
+==============
+All important functions can be found at the bottom of each file (except happy-generated files)
+The following files can be found in /Optimisanaitanu
+- IParser.y: Used to generate IParser.hs using happy. Contains a parseFile function that takes in a filepath
+- Unreachable.hs: Used to remove unreachable blocks in a function. It does not remove unreachable functions.
+                  It assumes that if a block is branched to, it is reachable
+- DeadCode.hs: Used to remove instructions that do not affect the return value
+- Redundant.hs: Used to rewrite registers so that less loads can be used.
+                This one does not work properly. Single blocks work fine, but when more are added it sometimes changes the correct registers to the correct things, sometimes changes the right register to the wrong thing (it's still a valid register, but doesn't help cutting down on the number of loads), and sometimes does nothing.
+- FlowGraph.hs: Used to store helper functions used across all 3 optimisations and generate a block flow graph
+
+
+Unit testing
+============
+Some tests were  written, but not exhaustive ones.

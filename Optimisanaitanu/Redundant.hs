@@ -64,58 +64,61 @@ getGenBlock _ _ = []
 
 --Gets the gen/kill for a block
 getBlockGenKills :: Node -> [(Node,[(Reg,Val)])] -> [(Node,[Node])] -> [Node] -> [(Reg,Val)]
-getBlockGenKills num gen (a:rest) loops = if (isin num loops) then snd a
+getBlockGenKills num gen (a:rest) loops = if (isin num loops) then  []
                                           else if (num == (fst a)) then
                                                     getBlockGenKill num gen gen ([a]++rest) (snd a) loops
                                                 else getBlockGenKills num gen rest loops
 getBlockGenKills _ _ _ _ = []
 
---Gets the earliest value
+--Gets the earliest value of val
 findVal :: Val -> [(Reg,Val)] -> Reg
 findVal v (a:rest) = if (v == (snd a)) then fst a
                      else findVal v rest
 findVal v _ = -1 --Something has gone wrong
 
+--Replaces Reg with another register if it occurs first
 replace :: Reg -> [(Reg,Val)] -> [(Reg,Val)] -> Reg
 replace r (a:rest) dat = if (r == (fst a)) then findVal (snd a) dat
                      else replace r rest dat
 replace r _ _ = r
 
-
+--Replaces the registers in an instruction
 replaceInstruction :: [(Reg,Val)] -> IInstruction -> IInstruction
-replaceInstruction dat (Ist reg r) = (Ist reg (replace r dat dat))
-replaceInstruction dat (Iop op r1 r2 r3) = (Iop op (replace r1 dat dat) (replace r2 dat dat) (replace r3 dat dat))
+replaceInstruction dat (Iop op r1 r2 r3) = (Iop op r1 (replace r2 dat dat) (replace r3 dat dat))
 replaceInstruction dat (Ibr r1 b1 b2) = (Ibr (replace 1 dat dat) b1 b2)
 replaceInstruction dat (Iret r1) =  (Iret (replace r1 dat dat))
-replaceInstruction dat (Icall r name args) = (Icall (replace r dat dat) name args)
 replaceInstruction dat a = a
 
+--Replaces the registers in a set of instructions
 removeLoadsInstructions :: [IInstruction] -> Node -> [(Node,[Node])] -> [(Node,[(Reg,Val)])] -> [Node] -> [(Reg,Val)] -> [IInstruction]
 removeLoadsInstructions (a:rest) bnum dat gen loops current = 
     [replaceInstruction (getGenKillInstruction a current) a] ++
                      (removeLoadsInstructions rest bnum dat gen loops (getGenKillInstruction a current)) 
 removeLoadsInstructions _ _ _ _ _ _ = []
 
-
+--Replaces the registers in a block
 removeLoadsBlock :: IBlock -> [(Node,[Node])] -> [(Node,[(Reg,Val)])] -> [Node] ->IBlock
 removeLoadsBlock (IBlock num i) dat gen loops = --(num,getBlockGenKills num gen dat loops)
          (IBlock num (removeLoadsInstructions i num dat gen loops (getBlockGenKills num gen dat loops)))
 
 
+--Replaces the registers in a set of blocks
 --                   Blocks    Control flow graph    Gen/kill for each block   Loopy    New blocks
 removeLoadsBlocks :: [IBlock] -> [(Node,[Node])] -> [(Node,[(Node,Val)])] -> [Node] -> [IBlock]
 removeLoadsBlocks (a:rest) dat gen loops = [removeLoadsBlock a dat gen loops] ++ (removeLoadsBlocks rest dat gen loops)
 removeLoadsBlocks _ _ _ _ = []
 
-
+--Replaces the registers in a function
 removeLoads :: IFunction -> [(Node,[Node])] -> IFunction
 removeLoads (IFunction name args blocks) a = (IFunction name args (removeLoadsBlocks blocks a (getGenKills blocks) (getCycles a a)))
 
+--Replaces the registers in a set of functions
 getLoads :: [IFunction] -> [[(Node,[Node])]] -> [IFunction]
 getLoads (f:rest) (a:rest1) = [removeLoads f  a] ++ (getLoads rest rest1)
 getLoads _ _ = []
 
 
+--Replaces the registers in a program
 removeRedundant :: IProgram -> IProgram
 removeRedundant (IProgram funcs) = (IProgram (getLoads funcs (reverseGraph (getBlocksFuncs funcs))))
 
