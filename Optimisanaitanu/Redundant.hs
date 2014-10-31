@@ -38,33 +38,43 @@ genIsIn b (a:rest) = if ((fst a) == (fst b)) then
 genIsIn _ _ = False
 
 --Merges two gen/kill graphs. Because if a register does not have the same value for all nodes that it can come from, that register should be discarded
+mergeGen1 :: [(Reg,Val)] -> [(Reg,Val)] -> [(Reg,Val)]
+--mergeGen1 a b = a++b
+mergeGen1 (a:rest) dat = if (genIsIn a dat) then [a] ++ (mergeGen1 rest dat)
+                        else mergeGen1 rest dat
+mergeGen1 _ _ = [] 
+
+--Merges two gen/kill graphs. Because if a register does not have the same value for all nodes that it can come from, that register should be discarded
 mergeGen :: [(Reg,Val)] -> [(Reg,Val)] -> [(Reg,Val)]
-mergeGen (a:rest) dat = if (genIsIn a dat) then [a] ++ (mergeGen rest dat)
-                        else mergeGen rest dat
-mergeGen _ _ = [] 
+mergeGen a b = if ((length a) == 0) then b
+                else if ((length b) == 0) then a 
+                else (mergeGen1 a b) ++ (mergeGen1 b a)
 
 --Gets the gen/kill for a block and all its parents
 getBlockGenKill :: Node -> [(Node,[(Reg,Val)])] ->[(Node,[(Reg,Val)])] -> [(Node,[Node])] -> [Node] -> [Node] -> [(Reg,Val)]
 getBlockGenKill num (a:rest) gen dat adds loops = if (isin (fst a) adds) then
-                                                  if ((length adds)>1) then 
-                                                    mergeGen ((getBlockGenKills (fst a) gen dat loops) ++ (snd a)) (getBlockGenKill num rest gen dat adds loops)
-                                                  else (getBlockGenKills (fst a) gen dat loops) ++ (snd a)
-                                              else getBlockGenKill num rest gen dat adds loops
+                                                        (snd a) ++ (getBlockGenKill num rest gen dat adds loops)
+                                                    else getBlockGenKill num rest gen dat adds loops
 getBlockGenKill _ _ _ _ _ _ = []
+
+getGenBlock :: Node -> [(Node,[(Reg,Val)])] -> [(Reg,Val)]
+getGenBlock num (a:rest) = if ((fst a)==num) then snd a
+                            else getGenBlock num rest
+getGenBlock _ _ = []
 
 --Gets the gen/kill for a block
 getBlockGenKills :: Node -> [(Node,[(Reg,Val)])] -> [(Node,[Node])] -> [Node] -> [(Reg,Val)]
-getBlockGenKills num gen (a:rest) loops = if (isin num loops) then []
+getBlockGenKills num gen (a:rest) loops = if (isin num loops) then snd a
                                           else if (num == (fst a)) then
                                                     getBlockGenKill num gen gen ([a]++rest) (snd a) loops
                                                 else getBlockGenKills num gen rest loops
 getBlockGenKills _ _ _ _ = []
 
---Gets the 
+--Gets the earliest value
 findVal :: Val -> [(Reg,Val)] -> Reg
 findVal v (a:rest) = if (v == (snd a)) then fst a
                      else findVal v rest
-findVal v _ = -1
+findVal v _ = -1 --Something has gone wrong
 
 replace :: Reg -> [(Reg,Val)] -> [(Reg,Val)] -> Reg
 replace r (a:rest) dat = if (r == (fst a)) then findVal (snd a) dat
@@ -83,17 +93,17 @@ replaceInstruction dat a = a
 removeLoadsInstructions :: [IInstruction] -> Node -> [(Node,[Node])] -> [(Node,[(Reg,Val)])] -> [Node] -> [(Reg,Val)] -> [IInstruction]
 removeLoadsInstructions (a:rest) bnum dat gen loops current = 
     [replaceInstruction (getGenKillInstruction a current) a] ++
-                     (removeLoadsInstructions rest bnum dat gen loops ((getGenKillInstruction a current))) 
+                     (removeLoadsInstructions rest bnum dat gen loops (getGenKillInstruction a current)) 
 removeLoadsInstructions _ _ _ _ _ _ = []
 
 
-removeLoadsBlock :: IBlock -> [(Node,[Node])] -> [(Node,[(Reg,Val)])] -> [Node] -> IBlock
-removeLoadsBlock (IBlock num i) dat gen loops =
+removeLoadsBlock :: IBlock -> [(Node,[Node])] -> [(Node,[(Reg,Val)])] -> [Node] ->IBlock
+removeLoadsBlock (IBlock num i) dat gen loops = --(num,getBlockGenKills num gen dat loops)
          (IBlock num (removeLoadsInstructions i num dat gen loops (getBlockGenKills num gen dat loops)))
 
 
 --                   Blocks    Control flow graph    Gen/kill for each block   Loopy    New blocks
-removeLoadsBlocks :: [IBlock] -> [(Node,[Node])] -> [(Node,[(Node,Val)])] -> [Node] ->  [IBlock]
+removeLoadsBlocks :: [IBlock] -> [(Node,[Node])] -> [(Node,[(Node,Val)])] -> [Node] -> [IBlock]
 removeLoadsBlocks (a:rest) dat gen loops = [removeLoadsBlock a dat gen loops] ++ (removeLoadsBlocks rest dat gen loops)
 removeLoadsBlocks _ _ _ _ = []
 
@@ -110,7 +120,7 @@ removeRedundant :: IProgram -> IProgram
 removeRedundant (IProgram funcs) = (IProgram (getLoads funcs (reverseGraph (getBlocksFuncs funcs))))
 
 -- Removes unreachable code  
-redundantFile :: FilePath -> IO IProgram
+redundantFile :: FilePath ->IO IProgram
 redundantFile file = do
    parsed_prog <- parseFile file
    return (removeRedundant parsed_prog)
