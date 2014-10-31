@@ -101,14 +101,14 @@ deadcode_insts (inst:rest) used_regs = case inst of
                      else (fst (deadcode_insts rest used_regs), used_regs)
                      where d = delete r used_regs
                      
-deadcode_file :: FilePath -> IO IProgram
+deadcode_file :: FilePath -> IO String
 deadcode_file file = do
    parsed_prog <- parseFile file
-   return (deadcode_prog parsed_prog)
+   return ((showIProg (deadcode_prog parsed_prog)) ++ "\n")
    
 main = do
-   dc <- deadcode_file "branching2.intermediate"
-   putStr (IParser.showIProg dc ++ "\n")
+   str <- deadcode_file "branching2.intermediate"
+   putStr str
 
 -- Backward flow analysis: Update list of used register numbers as you go through the reverse flow graph
 -- If a block contains a branch (i.e. more than one block points to it in the reverse flow graph), then
