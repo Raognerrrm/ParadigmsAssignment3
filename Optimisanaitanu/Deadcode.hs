@@ -42,8 +42,11 @@ top_sort graph = (node:(top_sort (remove_node node graph)))
 deadcode_prog :: IProgram -> IProgram
 deadcode_prog (IProgram funcs) = (IProgram (map deadcode_func funcs))
 
+comp_block :: IBlock -> IBlock -> Ordering
+comp_block (IBlock a _) (IBlock b _) = compare a b
+
 deadcode_func :: IFunction -> IFunction
-deadcode_func (IFunction name args blocks) = (IFunction name args (deadcode_blocks blocks))
+deadcode_func (IFunction name args blocks) = (IFunction name args (sortBy comp_block (deadcode_blocks blocks)))
 
 -- Run top_sort on the forward flow graph to get the order of blocks to travel
 -- when doing the backwards flow analysis
@@ -104,7 +107,7 @@ deadcode_file file = do
    return (deadcode_prog parsed_prog)
    
 main = do
-   dc <- deadcode_file "branching1.intermediate"
+   dc <- deadcode_file "branching2.intermediate"
    putStr (IParser.showIProg dc ++ "\n")
 
 -- Backward flow analysis: Update list of used register numbers as you go through the reverse flow graph
