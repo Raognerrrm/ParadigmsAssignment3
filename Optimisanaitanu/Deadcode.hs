@@ -77,7 +77,11 @@ deadcode_block used_regs fwd bwd (IBlock n insts) = ((IBlock n (reverse dc)), [(
                                                        rev = reverse insts
                                                        (dc,regs) = deadcode_insts rev ur
 
--- Clean up instructions within a given block                                                 
+-- Clean up instructions within a given block
+-- If instruction is lc, ld or similar, check if the register is used
+--   if so keep instruction and remove reg from list
+--   otherwise delete instruction
+-- If instruction is st, br or similar, then add register to the list                    
 deadcode_insts :: [IInstruction] -> [RegNum] -> ([IInstruction], [RegNum])
 deadcode_insts [] r = ([], r)
 deadcode_insts (inst:rest) used_regs = case inst of
