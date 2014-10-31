@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -w #-}
 module IParser where
 import Data.Char
+import Data.List
 import System.IO
 import Control.Applicative(Applicative(..))
 
@@ -504,6 +505,38 @@ data Token
   | TokenOB
   | TokenCB
   deriving Show
+  
+-- For printing
+showIProg :: IProgram -> String
+showIProg (IProgram funcs) = "(" ++ (intercalate "\n" (map showIFunc funcs)) ++ "  )\n"
+
+showIFunc :: IFunction -> String
+showIFunc (IFunction id (IArguments args) iblocks) = "( " ++ id ++ " (" ++ (intercalate " " args) ++ ")\n" ++ (intercalate "\n" (map showBlock iblocks)) ++ "  )"
+
+showBlock :: IBlock -> String
+showBlock (IBlock bnum [])    = "  (" ++ (show bnum) ++ "  )"
+showBlock (IBlock bnum insts) = "  (" ++ (show bnum) ++ "  " ++ (intercalate "\n      " (map showInst insts)) ++ "  )"
+
+showInst :: IInstruction -> String
+showInst inst = case inst of
+    Ilc reg const    -> "(lc r" ++ (show reg) ++ " " ++ (show const) ++ ")"
+    Ild reg var      -> "(ld r" ++ (show reg) ++ " " ++ var ++ ")"
+    Ist var reg      -> "(st " ++ var ++ " r" ++ (show reg) ++ ")"
+    Iop op r1 r2 r3  -> "(" ++ (toIop op) ++ " r" ++ (show r1) ++ " r" ++ (show r2) ++ " r" ++ (show r3) ++ ")"
+    Ibr cond b1 b2   -> "(br r" ++ (show cond) ++ " " ++ (show b1) ++ " " ++ (show b2) ++ ")"
+    Iret reg         -> "(ret r" ++ (show reg) ++ ")"
+    Icall reg f args -> "(call r" ++ (show reg) ++ " " ++ f ++ " r" ++ (intercalate " r" (map show args)) ++ ")"  
+    
+toIop :: Op -> String
+toIop op = case op of
+    Add         -> "add"
+    Sub         -> "sub"
+    Mul         -> "mul"
+    Div         -> "div"
+    LessThan    -> "lt"
+    GreaterThan -> "gt"
+    DEq         -> "cmp"
+
 
 lexer :: String -> [Token]
 lexer [] = []
