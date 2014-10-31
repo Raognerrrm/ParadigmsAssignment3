@@ -56,8 +56,8 @@ deadcode_blocks blocks = deadcode_b block_order [] forward_graph backward_graph 
 deadcode_b :: [BlockNum] -> UsedRegMap -> BlockFlowGraph -> BlockFlowGraph -> [IBlock] -> [IBlock]
 deadcode_b _ _ _ _ [] = []
 deadcode_b nums used_regs fwd bwd (block:rest) = (a:b)
-                                               where a = (deadcode_block nums used_regs fwd bwd block)
-                                                     b = (deadcode_b nums used_regs fwd bwd rest)
+                                               where (a,r) = deadcode_block nums used_regs fwd bwd block
+                                                     b = deadcode_b nums r fwd bwd rest
                                                      
 s_lookup :: Eq a => a -> [(a,b)] -> b
 s_lookup x [] = error "Error: lookup failed"
@@ -68,26 +68,35 @@ get_used_regs :: BlockNum -> UsedRegMap -> BlockFlowGraph -> [RegNum]
 get_used_regs bnum used_regs fwd_graph = foldl union [] (map (\x -> s_lookup x used_regs) adj)
                                        where adj = s_lookup bnum fwd_graph
                                 
-deadcode_block :: [BlockNum] -> UsedRegMap -> BlockFlowGraph -> BlockFlowGraph -> IBlock -> IBlock
-deadcode_block (b:rest) used_regs fwd bwd (IBlock n insts) = (IBlock n (reverse (deadcode_insts rev ur)))
+deadcode_block :: [BlockNum] -> UsedRegMap -> BlockFlowGraph -> BlockFlowGraph -> IBlock -> (IBlock, UsedRegMap)
+deadcode_block (b:rest) used_regs fwd bwd (IBlock n insts) = ((IBlock n (reverse dc)), [(b,regs)]++used_regs)
                                                  where ur = get_used_regs b used_regs fwd
                                                        rev = reverse insts
+                                                       (dc,regs) = deadcode_insts rev ur
 
 -- Clean up instructions within a given block                                                 
-deadcode_insts :: [IInstruction] -> [RegNum] -> [IInstruction]
-deadcode_insts [] _ = []
+deadcode_insts :: [IInstruction] -> [RegNum] -> ([IInstruction], [RegNum])
+deadcode_insts [] r = ([], r)
 deadcode_insts (inst:rest) used_regs = case inst of
-   Ilc r _        -> if elem r used_regs then (inst:(deadcode_insts rest (delete r used_regs)))
-                     else deadcode_insts rest used_regs
-   Ild r _        -> if elem r used_regs then (inst:(deadcode_insts rest (delete r used_regs)))
-                     else deadcode_insts rest used_regs
-   Ist _ r        -> (inst:(deadcode_insts rest (union [r] used_regs)))
-   Iop _ r1 r2 r3 -> if elem r1 used_regs then (inst:(deadcode_insts rest (union [r2, r3] (delete r1 used_regs))))
-                     else deadcode_insts rest used_regs
-   Ibr r _ _      -> (inst:(deadcode_insts rest (union [r] used_regs)))
-   Iret r         -> (inst:(deadcode_insts rest (union [r] used_regs)))
-   Icall r _ _    -> if elem r used_regs then (inst:(deadcode_insts rest (delete r used_regs)))
-                     else deadcode_insts rest used_regs
+   Ilc r _        -> if elem r used_regs then (inst:(fst (deadcode_insts rest d)), d)
+                     else (fst (deadcode_insts rest used_regs), used_regs)
+                     where d = delete r used_regs
+   Ild r _        -> if elem r used_regs then (inst:(fst (deadcode_insts rest d)), d)
+                     else (fst (deadcode_insts rest used_regs), used_regs)
+                     where d = delete r used_regs
+   Ist _ r        -> (inst:(fst (deadcode_insts rest u)), u)
+                     where u = union [r] used_regs
+   Iop _ r1 r2 r3 -> if elem r1 used_regs then (inst:(fst (deadcode_insts rest u)), u)
+                     else (fst (deadcode_insts rest used_regs), used_regs)
+                     where d = delete r1 used_regs
+                           u = union [r2, r3] d
+   Ibr r _ _      -> (inst:(fst (deadcode_insts rest u)), u)
+                     where u = union [r] used_regs
+   Iret r         -> (inst:(fst (deadcode_insts rest u)), u)
+                     where u = union [r] used_regs
+   Icall r _ _    -> if elem r used_regs then (inst:(fst (deadcode_insts rest d)), d)
+                     else (fst (deadcode_insts rest used_regs), used_regs)
+                     where d = delete r used_regs
                      
 deadcode_file :: FilePath -> IO IProgram
 deadcode_file file = do
@@ -95,7 +104,7 @@ deadcode_file file = do
    return (deadcode_prog parsed_prog)
    
 main = do
-   dc <- deadcode_file "deadcode.intermediate"
+   dc <- deadcode_file "branching.intermediate"
    putStr (IParser.showIProg dc ++ "\n")
 
 -- Backward flow analysis: Update list of used register numbers as you go through the reverse flow graph
